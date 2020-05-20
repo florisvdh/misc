@@ -1,0 +1,449 @@
+``` r
+# install
+
+remotes::install_github("r-spatial/sf@gpkg")
+#> Using github PAT from envvar GITHUB_PAT
+#> Skipping install of 'sf' from a github remote, the SHA1 (76cf2872) has not changed since last install.
+#>   Use `force = TRUE` to force installation
+
+# creating gpkg file with 2 spatial layers
+
+library(dplyr)
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
+library(sf)
+#> Linking to GEOS 3.5.1, GDAL 2.2.2, PROJ 4.9.2
+
+inborutils::download_zenodo("10.5281/zenodo.3784149")
+#> Will download 1 file (total size: 32.5 KiB) from https://doi.org/10.5281/zenodo.3784149 (Distribution of the Natura 2000 habitat type 7220 (Cratoneurion) in Flanders, Belgium (version 2020); version: habitatsprings_2020v2)
+#> 
+#> Verifying file integrity...
+#> habitatsprings.geojson was downloaded and its integrity verified (md5sum: 64c3db07d17274da047b3962aab28e80)
+inborutils::download_zenodo("10.5281/zenodo.3386815")
+#> Will download 6 files (total size: 1.5 MiB) from https://doi.org/10.5281/zenodo.3386815 (Redistribution of the map with the Special Areas of Conservation in Flanders with respect to Directive 92/43/EEC (status 2013-01-18); version: sac_2013-01-18)
+#> 
+#> Verifying file integrity...
+#> sac.dbf was downloaded and its integrity verified (md5sum: 1fc2a8b5f56ad4ba05a999697e31626e)
+#> sac.prj was downloaded and its integrity verified (md5sum: e8c2db3e5567fbf7ef9c0f306fde20f2)
+#> sac.sbn was downloaded and its integrity verified (md5sum: 945791898114a317581c5560d025e420)
+#> sac.sbx was downloaded and its integrity verified (md5sum: 7d75b87ca3aad3ae275ff447a1b2d75c)
+#> sac.shp was downloaded and its integrity verified (md5sum: ce6f5cbb37f35884f28053a4be765408)
+#> sac.shx was downloaded and its integrity verified (md5sum: 91094173055ff88e77355930464853a9)
+
+habsprings <- st_read("habitatsprings.geojson")
+#> Reading layer `habitatsprings' from data source `/tmp/RtmpNoZzsi/reprex202e2a3563de/habitatsprings.geojson' using driver `GeoJSON'
+#> Simple feature collection with 104 features and 10 fields
+#> geometry type:  POINT
+#> dimension:      XY
+#> bbox:           xmin: 2.757966 ymin: 50.70777 xmax: 5.904029 ymax: 50.92789
+#> CRS:            4326
+habsprings %>% st_write("layers.gpkg",
+                        layer = "habsprings",
+                        delete_dsn = TRUE)
+#> Deleting source `layers.gpkg' failed
+#> Writing layer `habsprings' to data source `layers.gpkg' using driver `GPKG'
+#> Writing 104 features with 10 fields and geometry type Point.
+(read_sf("layers.gpkg"))
+#> Simple feature collection with 104 features and 10 fields
+#> geometry type:  POINT
+#> dimension:      XY
+#> bbox:           xmin: 2.757966 ymin: 50.70777 xmax: 5.904029 ymax: 50.92789
+#> CRS:            4326
+#> # A tibble: 104 x 11
+#>       id source validity_status name  system_type habitattype unit_id area_m2
+#>    <dbl> <chr>  <chr>           <chr> <chr>       <chr>         <dbl>   <dbl>
+#>  1     1 kalkt… gecontroleerd   Stee… rivulet     7220              1      50
+#>  2     2 kalkt… gecontroleerd   Stee… rivulet     7220              1      20
+#>  3     3 kalkt… gecontroleerd   Duli… <NA>        7230             NA       0
+#>  4     4 kalkt… gecontroleerd   Kapi… <NA>        gh               NA       0
+#>  5     5 kalkt… gecontroleerd   Reme… rivulet     7220              2     200
+#>  6     6 kalkt… gecontroleerd   Reme… rivulet     7220              2     500
+#>  7     7 anb    te controleren  Kest… unknown     7220,gh          32       0
+#>  8     8 kalkt… gecontroleerd   Krin… rivulet     7220              3     800
+#>  9     9 kalkt… gecontroleerd   Bois… rivulet     7220              4      50
+#> 10    10 kalkt… gecontroleerd   Kwin… mire        7220              5      10
+#> # … with 94 more rows, and 3 more variables: year <dbl>, sbz <dbl>, geom <POINT
+#> #   [°]>
+
+sac <- st_read("sac.shp")
+#> Reading layer `sac' from data source `/tmp/RtmpNoZzsi/reprex202e2a3563de/sac.shp' using driver `ESRI Shapefile'
+#> Simple feature collection with 616 features and 12 fields
+#> geometry type:  POLYGON
+#> dimension:      XY
+#> bbox:           xmin: 22084.25 ymin: 153207.4 xmax: 258865 ymax: 243333
+#> proj4string:    +proj=lcc +lat_1=49.8333339 +lat_2=51.16666723333333 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.01256 +y_0=5400088.4378 +ellps=intl +units=m +no_defs
+sac %>% st_write("layers.gpkg",
+                        layer = "sac")
+#> Writing layer `sac' to data source `layers.gpkg' using driver `GPKG'
+#> Writing 616 features with 12 fields and geometry type Polygon.
+
+st_layers("layers.gpkg")
+#> Driver: GPKG 
+#> Available layers:
+#>   layer_name geometry_type features fields
+#> 1 habsprings         Point      104     10
+#> 2        sac       Polygon      616     12
+(read_sf("layers.gpkg", layer = "sac"))
+#> Simple feature collection with 616 features and 12 fields
+#> geometry type:  POLYGON
+#> dimension:      XY
+#> bbox:           xmin: 22084.25 ymin: 153207.4 xmax: 258865 ymax: 243333
+#> proj4string:    +proj=lcc +lat_1=49.8333339 +lat_2=51.16666723333333 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.01256 +y_0=5400088.4378 +ellps=intl +units=m +no_defs 
+#> # A tibble: 616 x 13
+#>    OBJECTID   AREA PERIMETER POLY_ID VOLGNR GEBCODE DEELGEBIED GEBOPP_HA
+#>       <int>  <dbl>     <dbl>   <int>  <int> <chr>   <chr>          <int>
+#>  1        1 2.42e6    12389.       1     18 BE2100… BE2100020…       678
+#>  2        2 5.48e5     7234.       2     18 BE2100… BE2100020…       678
+#>  3        3 5.86e5     4973.       3     19 BE2100… BE2100024…      3627
+#>  4        4 2.06e7    27230.       4     14 BE2100… BE2100015…      2064
+#>  5        5 2.62e5     2082.       5     19 BE2100… BE2100024…      3627
+#>  6        6 9.43e5     4989.       6     18 BE2100… BE2100020…       678
+#>  7        7 2.18e5     2010.       7     19 BE2100… BE2100024…      3627
+#>  8        8 3.34e5     2967.       8     19 BE2100… BE2100024…      3627
+#>  9        9 1.21e7    23357.       9     19 BE2100… BE2100024…      3627
+#> 10       10 1.01e6     5913.      10     19 BE2100… BE2100024…      3627
+#> # … with 606 more rows, and 5 more variables: HECTARES <dbl>, NAAM <chr>,
+#> #   Shape_Leng <dbl>, Shape_Area <dbl>, geom <POLYGON [m]>
+(read_sf("layers.gpkg", layer = "habsprings"))
+#> Simple feature collection with 104 features and 10 fields
+#> geometry type:  POINT
+#> dimension:      XY
+#> bbox:           xmin: 2.757966 ymin: 50.70777 xmax: 5.904029 ymax: 50.92789
+#> CRS:            4326
+#> # A tibble: 104 x 11
+#>       id source validity_status name  system_type habitattype unit_id area_m2
+#>    <dbl> <chr>  <chr>           <chr> <chr>       <chr>         <dbl>   <dbl>
+#>  1     1 kalkt… gecontroleerd   Stee… rivulet     7220              1      50
+#>  2     2 kalkt… gecontroleerd   Stee… rivulet     7220              1      20
+#>  3     3 kalkt… gecontroleerd   Duli… <NA>        7230             NA       0
+#>  4     4 kalkt… gecontroleerd   Kapi… <NA>        gh               NA       0
+#>  5     5 kalkt… gecontroleerd   Reme… rivulet     7220              2     200
+#>  6     6 kalkt… gecontroleerd   Reme… rivulet     7220              2     500
+#>  7     7 anb    te controleren  Kest… unknown     7220,gh          32       0
+#>  8     8 kalkt… gecontroleerd   Krin… rivulet     7220              3     800
+#>  9     9 kalkt… gecontroleerd   Bois… rivulet     7220              4      50
+#> 10    10 kalkt… gecontroleerd   Kwin… mire        7220              5      10
+#> # … with 94 more rows, and 3 more variables: year <dbl>, sbz <dbl>, geom <POINT
+#> #   [°]>
+
+# adding non-spatial table
+
+mydf <- tibble(a = rep(letters, 100),
+               b = seq_along(a) %>% rev,
+               c = b / 100,
+               d = lubridate::dmy("1/1/2020") - b,
+               e = lubridate::now() - b)
+
+## without GDAL option already works beautifully (uses GDAL default):
+
+mydf %>%
+    st_write("layers.gpkg",
+             layer = "mydf",
+             delete_layer = TRUE)  # note: delete_layer also works after repeating
+#> Deleting layer `mydf' failed
+#> Writing layer `mydf' to data source `layers.gpkg' using driver `GPKG'
+#> Writing 2600 features with 5 fields without geometries.
+
+(read_sf("layers.gpkg", layer = "mydf")) # no warning
+#> # A tibble: 2,600 x 5
+#>    a         b     c d          e                  
+#>    <chr> <int> <dbl> <date>     <dttm>             
+#>  1 a      2600  26   2012-11-18 2020-05-20 20:29:39
+#>  2 b      2599  26.0 2012-11-19 2020-05-20 20:29:40
+#>  3 c      2598  26.0 2012-11-20 2020-05-20 20:29:41
+#>  4 d      2597  26.0 2012-11-21 2020-05-20 20:29:42
+#>  5 e      2596  26.0 2012-11-22 2020-05-20 20:29:43
+#>  6 f      2595  26.0 2012-11-23 2020-05-20 20:29:44
+#>  7 g      2594  25.9 2012-11-24 2020-05-20 20:29:45
+#>  8 h      2593  25.9 2012-11-25 2020-05-20 20:29:46
+#>  9 i      2592  25.9 2012-11-26 2020-05-20 20:29:47
+#> 10 j      2591  25.9 2012-11-27 2020-05-20 20:29:48
+#> # … with 2,590 more rows
+(st_read("layers.gpkg", layer = "mydf",  # returns warning = OK
+         as_tibble = TRUE,
+         stringsAsFactors = FALSE))
+#> Reading layer `mydf' from data source `/tmp/RtmpNoZzsi/reprex202e2a3563de/layers.gpkg' using driver `GPKG'
+#> Warning: no simple feature geometries present: returning a data.frame or tbl_df
+#> # A tibble: 2,600 x 5
+#>    a         b     c d          e                  
+#>    <chr> <int> <dbl> <date>     <dttm>             
+#>  1 a      2600  26   2012-11-18 2020-05-20 20:29:39
+#>  2 b      2599  26.0 2012-11-19 2020-05-20 20:29:40
+#>  3 c      2598  26.0 2012-11-20 2020-05-20 20:29:41
+#>  4 d      2597  26.0 2012-11-21 2020-05-20 20:29:42
+#>  5 e      2596  26.0 2012-11-22 2020-05-20 20:29:43
+#>  6 f      2595  26.0 2012-11-23 2020-05-20 20:29:44
+#>  7 g      2594  25.9 2012-11-24 2020-05-20 20:29:45
+#>  8 h      2593  25.9 2012-11-25 2020-05-20 20:29:46
+#>  9 i      2592  25.9 2012-11-26 2020-05-20 20:29:47
+#> 10 j      2591  25.9 2012-11-27 2020-05-20 20:29:48
+#> # … with 2,590 more rows
+
+(read_sf("layers.gpkg", layer = "mydf")) %>%
+    mutate(e = as.character(e)) %>%
+    all.equal(mydf %>%
+                  mutate(e = as.character(e)))
+#> [1] TRUE
+
+## explicitly using GDAL option has no other effect except explicit confirmation
+## of layer_options:
+
+mydf %>%
+    st_write("layers.gpkg",
+             layer = "mydf2",
+             layer_options = "ASPATIAL_VARIANT=GPKG_ATTRIBUTES")
+#> Writing layer `mydf2' to data source `layers.gpkg' using driver `GPKG'
+#> options:        ASPATIAL_VARIANT=GPKG_ATTRIBUTES 
+#> Writing 2600 features with 5 fields without geometries.
+
+(read_sf("layers.gpkg", layer = "mydf")) %>%
+    all.equal(
+        (read_sf("layers.gpkg", layer = "mydf2"))
+    )
+#> [1] TRUE
+
+## creating new gpkg file with only non-spatial layers:
+
+mydf %>%
+    st_write("layers2.gpkg",
+             layer = "mydf",
+             delete_dsn = TRUE)
+#> Deleting source `layers2.gpkg' failed
+#> Writing layer `mydf' to data source `layers2.gpkg' using driver `GPKG'
+#> Writing 2600 features with 5 fields without geometries.
+mydf %>%
+    st_write("layers2.gpkg",
+             layer = "mydf2")
+#> Writing layer `mydf2' to data source `layers2.gpkg' using driver `GPKG'
+#> Writing 2600 features with 5 fields without geometries.
+
+
+# again adding spatial layers to both gpkg files:
+
+sac %>%
+    filter(stringr::str_detect(NAAM, "Turnhout")) %>%
+    st_write("layers.gpkg",
+             layer = "turnhout")
+#> Writing layer `turnhout' to data source `layers.gpkg' using driver `GPKG'
+#> Writing 16 features with 12 fields and geometry type Polygon.
+sac %>%
+    filter(stringr::str_detect(NAAM, "Turnhout")) %>%
+    st_write("layers2.gpkg",
+             layer = "turnhout")
+#> Writing layer `turnhout' to data source `layers2.gpkg' using driver `GPKG'
+#> Writing 16 features with 12 fields and geometry type Polygon.
+
+st_layers("layers.gpkg")
+#> Driver: GPKG 
+#> Available layers:
+#>   layer_name geometry_type features fields
+#> 1 habsprings         Point      104     10
+#> 2        sac       Polygon      616     12
+#> 3   turnhout       Polygon       16     12
+#> 4       mydf            NA     2600      5
+#> 5      mydf2            NA     2600      5
+st_layers("layers2.gpkg")
+#> Driver: GPKG 
+#> Available layers:
+#>   layer_name geometry_type features fields
+#> 1   turnhout       Polygon       16     12
+#> 2       mydf            NA     2600      5
+#> 3      mydf2            NA     2600      5
+
+(read_sf("layers2.gpkg", layer = "turnhout"))
+#> Simple feature collection with 16 features and 12 fields
+#> geometry type:  POLYGON
+#> dimension:      XY
+#> bbox:           xmin: 186568.8 ymin: 222860.1 xmax: 203303.3 ymax: 235490.7
+#> proj4string:    +proj=lcc +lat_1=49.8333339 +lat_2=51.16666723333333 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.01256 +y_0=5400088.4378 +ellps=intl +units=m +no_defs 
+#> # A tibble: 16 x 13
+#>    OBJECTID   AREA PERIMETER POLY_ID VOLGNR GEBCODE DEELGEBIED GEBOPP_HA
+#>       <int>  <dbl>     <dbl>   <int>  <int> <chr>   <chr>          <int>
+#>  1        3 5.86e5     4973.       3     19 BE2100… BE2100024…      3627
+#>  2        5 2.62e5     2082.       5     19 BE2100… BE2100024…      3627
+#>  3        7 2.18e5     2010.       7     19 BE2100… BE2100024…      3627
+#>  4        8 3.34e5     2967.       8     19 BE2100… BE2100024…      3627
+#>  5        9 1.21e7    23357.       9     19 BE2100… BE2100024…      3627
+#>  6       10 1.01e6     5913.      10     19 BE2100… BE2100024…      3627
+#>  7       12 1.96e6     8857.      12     19 BE2100… BE2100024…      3627
+#>  8       14 3.88e6    11600.      14     19 BE2100… BE2100024…      3627
+#>  9       16 5.00e5     3818.      16     19 BE2100… BE2100024…      3627
+#> 10       19 2.06e6     6995.      19     19 BE2100… BE2100024…      3627
+#> 11       21 8.29e5     6660.      21     19 BE2100… BE2100024…      3627
+#> 12       23 9.09e5     6601.      23     19 BE2100… BE2100024…      3627
+#> 13       24 9.11e6    25703.      24     19 BE2100… BE2100024…      3627
+#> 14       27 3.20e5     3266.      27     19 BE2100… BE2100024…      3627
+#> 15       35 2.01e6    10756.      35     19 BE2100… BE2100024…      3627
+#> 16       46 1.95e5     1890.      46     19 BE2100… BE2100024…      3627
+#> # … with 5 more variables: HECTARES <dbl>, NAAM <chr>, Shape_Leng <dbl>,
+#> #   Shape_Area <dbl>, geom <POLYGON [m]>
+(read_sf("layers2.gpkg", layer = "mydf"))
+#> # A tibble: 2,600 x 5
+#>    a         b     c d          e                  
+#>    <chr> <int> <dbl> <date>     <dttm>             
+#>  1 a      2600  26   2012-11-18 2020-05-20 20:29:39
+#>  2 b      2599  26.0 2012-11-19 2020-05-20 20:29:40
+#>  3 c      2598  26.0 2012-11-20 2020-05-20 20:29:41
+#>  4 d      2597  26.0 2012-11-21 2020-05-20 20:29:42
+#>  5 e      2596  26.0 2012-11-22 2020-05-20 20:29:43
+#>  6 f      2595  26.0 2012-11-23 2020-05-20 20:29:44
+#>  7 g      2594  25.9 2012-11-24 2020-05-20 20:29:45
+#>  8 h      2593  25.9 2012-11-25 2020-05-20 20:29:46
+#>  9 i      2592  25.9 2012-11-26 2020-05-20 20:29:47
+#> 10 j      2591  25.9 2012-11-27 2020-05-20 20:29:48
+#> # … with 2,590 more rows
+(read_sf("layers2.gpkg", layer = "mydf2"))
+#> # A tibble: 2,600 x 5
+#>    a         b     c d          e                  
+#>    <chr> <int> <dbl> <date>     <dttm>             
+#>  1 a      2600  26   2012-11-18 2020-05-20 20:29:39
+#>  2 b      2599  26.0 2012-11-19 2020-05-20 20:29:40
+#>  3 c      2598  26.0 2012-11-20 2020-05-20 20:29:41
+#>  4 d      2597  26.0 2012-11-21 2020-05-20 20:29:42
+#>  5 e      2596  26.0 2012-11-22 2020-05-20 20:29:43
+#>  6 f      2595  26.0 2012-11-23 2020-05-20 20:29:44
+#>  7 g      2594  25.9 2012-11-24 2020-05-20 20:29:45
+#>  8 h      2593  25.9 2012-11-25 2020-05-20 20:29:46
+#>  9 i      2592  25.9 2012-11-26 2020-05-20 20:29:47
+#> 10 j      2591  25.9 2012-11-27 2020-05-20 20:29:48
+#> # … with 2,590 more rows
+
+# reading GPKG with aspatial table from GPKG 1.0 also works:
+#
+# soil_path <-
+#     file.path(n2khab::fileman_up("n2khab_data"),
+#               "20_processed/soilmap_simple/soilmap_simple.gpkg")
+# st_layers(soil_path)
+# (read_sf(soil_path))
+# (read_sf(soil_path, layer = "explanations")) # no warning
+# (st_read(soil_path, layer = "explanations",  # returns warning = OK
+#          as_tibble = TRUE,
+#          stringsAsFactors = FALSE))
+```
+
+<sup>Created on 2020-05-20 by the [reprex package](https://reprex.tidyverse.org) (v0.3.0)</sup>
+
+<details>
+
+<summary>Session info</summary>
+
+``` r
+devtools::session_info()
+#> ─ Session info ───────────────────────────────────────────────────────────────
+#>  setting  value                       
+#>  version  R version 3.6.3 (2020-02-29)
+#>  os       Linux Mint 18.1             
+#>  system   x86_64, linux-gnu           
+#>  ui       X11                         
+#>  language (EN)                        
+#>  collate  nl_BE.UTF-8                 
+#>  ctype    nl_BE.UTF-8                 
+#>  tz       Europe/Brussels             
+#>  date     2020-05-20                  
+#> 
+#> ─ Packages ───────────────────────────────────────────────────────────────────
+#>  package     * version    date       lib source                          
+#>  assertable    0.2.7      2019-09-21 [1] CRAN (R 3.6.1)                  
+#>  assertthat    0.2.1      2019-03-21 [1] CRAN (R 3.6.0)                  
+#>  backports     1.1.7      2020-05-13 [1] CRAN (R 3.6.3)                  
+#>  bit           1.1-15.2   2020-02-10 [1] CRAN (R 3.6.2)                  
+#>  bit64         0.9-7      2017-05-08 [1] CRAN (R 3.6.0)                  
+#>  blob          1.2.1      2020-01-20 [1] CRAN (R 3.6.2)                  
+#>  callr         3.4.3      2020-03-28 [1] CRAN (R 3.6.3)                  
+#>  class         7.3-17     2020-04-26 [4] CRAN (R 3.6.3)                  
+#>  classInt      0.4-3      2020-04-07 [1] CRAN (R 3.6.3)                  
+#>  cli           2.0.2      2020-02-28 [1] CRAN (R 3.6.3)                  
+#>  colorspace    1.4-1      2019-03-18 [1] CRAN (R 3.6.0)                  
+#>  crayon        1.3.4      2017-09-16 [1] CRAN (R 3.6.0)                  
+#>  crosstalk     1.1.0.1    2020-03-13 [1] CRAN (R 3.6.3)                  
+#>  curl          4.3        2019-12-02 [1] CRAN (R 3.6.2)                  
+#>  data.table    1.12.8     2019-12-09 [1] CRAN (R 3.6.2)                  
+#>  DBI           1.1.0      2019-12-15 [1] CRAN (R 3.6.2)                  
+#>  desc          1.2.0      2018-05-01 [1] CRAN (R 3.6.0)                  
+#>  devtools      2.3.0      2020-04-10 [1] CRAN (R 3.6.3)                  
+#>  digest        0.6.25     2020-02-23 [1] CRAN (R 3.6.3)                  
+#>  dplyr       * 0.8.5      2020-03-07 [1] CRAN (R 3.6.3)                  
+#>  e1071         1.7-3      2019-11-26 [1] CRAN (R 3.6.2)                  
+#>  ellipsis      0.3.0      2019-09-20 [1] CRAN (R 3.6.1)                  
+#>  evaluate      0.14       2019-05-28 [1] CRAN (R 3.6.1)                  
+#>  fansi         0.4.1      2020-01-08 [1] CRAN (R 3.6.2)                  
+#>  fs            1.4.1      2020-04-04 [1] CRAN (R 3.6.3)                  
+#>  generics      0.0.2      2018-11-29 [1] CRAN (R 3.6.0)                  
+#>  geoaxe        0.1.0      2016-02-19 [1] CRAN (R 3.6.0)                  
+#>  ggplot2       3.3.0      2020-03-05 [1] CRAN (R 3.6.3)                  
+#>  glue          1.4.1      2020-05-13 [1] CRAN (R 3.6.3)                  
+#>  gtable        0.3.0      2019-03-25 [1] CRAN (R 3.6.0)                  
+#>  highr         0.8        2019-03-20 [1] CRAN (R 3.6.0)                  
+#>  hms           0.5.3      2020-01-08 [1] CRAN (R 3.6.2)                  
+#>  htmltools     0.4.0      2019-10-04 [1] CRAN (R 3.6.1)                  
+#>  htmlwidgets   1.5.1      2019-10-08 [1] CRAN (R 3.6.1)                  
+#>  httr          1.4.1      2019-08-05 [1] CRAN (R 3.6.1)                  
+#>  inborutils    0.1.0.9081 2020-05-06 [1] Github (inbo/inborutils@6341166)
+#>  iterators     1.0.12     2019-07-26 [1] CRAN (R 3.6.1)                  
+#>  jsonlite      1.6.1      2020-02-02 [1] CRAN (R 3.6.2)                  
+#>  KernSmooth    2.23-17    2020-04-26 [4] CRAN (R 3.6.3)                  
+#>  knitr         1.28       2020-02-06 [1] CRAN (R 3.6.3)                  
+#>  lattice       0.20-41    2020-04-02 [4] CRAN (R 3.6.3)                  
+#>  lazyeval      0.2.2      2019-03-15 [1] CRAN (R 3.6.3)                  
+#>  leaflet       2.0.3      2019-11-16 [1] CRAN (R 3.6.2)                  
+#>  lifecycle     0.2.0      2020-03-06 [1] CRAN (R 3.6.3)                  
+#>  lubridate     1.7.8      2020-04-06 [1] CRAN (R 3.6.3)                  
+#>  magrittr      1.5        2014-11-22 [1] CRAN (R 3.6.0)                  
+#>  memoise       1.1.0      2017-04-21 [1] CRAN (R 3.6.0)                  
+#>  munsell       0.5.0      2018-06-12 [1] CRAN (R 3.6.0)                  
+#>  oai           0.3.0      2019-09-07 [1] CRAN (R 3.6.1)                  
+#>  odbc          1.2.2      2020-01-10 [1] CRAN (R 3.6.3)                  
+#>  pillar        1.4.4      2020-05-05 [1] CRAN (R 3.6.3)                  
+#>  pkgbuild      1.0.8      2020-05-07 [1] CRAN (R 3.6.3)                  
+#>  pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 3.6.1)                  
+#>  pkgload       1.0.2      2018-10-29 [1] CRAN (R 3.6.0)                  
+#>  plyr          1.8.6      2020-03-03 [1] CRAN (R 3.6.3)                  
+#>  prettyunits   1.1.1      2020-01-24 [1] CRAN (R 3.6.3)                  
+#>  processx      3.4.2      2020-02-09 [1] CRAN (R 3.6.3)                  
+#>  ps            1.3.3      2020-05-08 [1] CRAN (R 3.6.3)                  
+#>  purrr         0.3.4      2020-04-17 [1] CRAN (R 3.6.3)                  
+#>  R6            2.4.1      2019-11-12 [1] CRAN (R 3.6.2)                  
+#>  Rcpp          1.0.4.6    2020-04-09 [1] CRAN (R 3.6.3)                  
+#>  readr         1.3.1      2018-12-21 [1] CRAN (R 3.6.2)                  
+#>  remotes       2.1.1      2020-02-15 [1] CRAN (R 3.6.3)                  
+#>  reprex        0.3.0      2019-05-16 [1] CRAN (R 3.6.1)                  
+#>  rgbif         2.2.0      2020-03-09 [1] CRAN (R 3.6.3)                  
+#>  rgeos         0.5-3      2020-05-08 [1] CRAN (R 3.6.3)                  
+#>  rlang         0.4.6      2020-05-02 [1] CRAN (R 3.6.3)                  
+#>  rmarkdown     2.1        2020-01-20 [1] CRAN (R 3.6.3)                  
+#>  rprojroot     1.3-2      2018-01-03 [1] CRAN (R 3.6.0)                  
+#>  RSQLite       2.2.0      2020-01-07 [1] CRAN (R 3.6.2)                  
+#>  scales        1.1.1      2020-05-11 [1] CRAN (R 3.6.3)                  
+#>  sessioninfo   1.1.1      2018-11-05 [1] CRAN (R 3.6.0)                  
+#>  sf          * 0.9-4      2020-05-19 [1] Github (r-spatial/sf@76cf287)   
+#>  sp            1.4-1      2020-02-28 [1] CRAN (R 3.6.3)                  
+#>  stringi       1.4.6      2020-02-17 [1] CRAN (R 3.6.3)                  
+#>  stringr       1.4.0      2019-02-10 [1] CRAN (R 3.6.0)                  
+#>  testthat      2.3.2      2020-03-02 [1] CRAN (R 3.6.3)                  
+#>  tibble        3.0.1      2020-04-20 [1] CRAN (R 3.6.3)                  
+#>  tidyr         1.0.3      2020-05-07 [1] CRAN (R 3.6.3)                  
+#>  tidyselect    1.1.0      2020-05-11 [1] CRAN (R 3.6.3)                  
+#>  units         0.6-6      2020-03-16 [1] CRAN (R 3.6.3)                  
+#>  usethis       1.6.1      2020-04-29 [1] CRAN (R 3.6.3)                  
+#>  utf8          1.1.4      2018-05-24 [1] CRAN (R 3.6.0)                  
+#>  vctrs         0.3.0      2020-05-11 [1] CRAN (R 3.6.3)                  
+#>  whisker       0.4        2019-08-28 [1] CRAN (R 3.6.1)                  
+#>  withr         2.2.0      2020-04-20 [1] CRAN (R 3.6.3)                  
+#>  xfun          0.13       2020-04-13 [1] CRAN (R 3.6.3)                  
+#>  xml2          1.3.2      2020-04-23 [1] CRAN (R 3.6.3)                  
+#>  yaml          2.2.1      2020-02-01 [1] CRAN (R 3.6.2)                  
+#> 
+#> [1] /home/floris/lib/R/library
+#> [2] /usr/local/lib/R/site-library
+#> [3] /usr/lib/R/site-library
+#> [4] /usr/lib/R/library
+```
+
+</details>
+
